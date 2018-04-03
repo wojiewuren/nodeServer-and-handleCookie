@@ -19,9 +19,13 @@
         this.expire = expire;
     }
     // 设置cookie   
-    HandleCookie.prototype.set = function(key, val, path, expire) {
-        if(key && val) {
-            document.cookie = key + '=' + val;
+    HandleCookie.prototype.set = function(opt) {
+        if(Object.prototype.toString.call(opt) === '[object Object]') {
+            if(JSON.stringify(opt) === '{}') return;
+            for(let k in opt) {
+                if(!k || !opt[k]) continue;
+                document.cookie = k + '=' + opt[k];
+            }
         }
     }
     // 获取cookie   
@@ -44,7 +48,7 @@
         return; 
     }
     
-    const handleCookie = new HandleCookie(defaultParams.name, defaultParams.val, defaultParams.path, defaultParams.expire);
+    const handleCookie = new HandleCookie(defaultParams.path, defaultParams.expire);
 
     window.handleCookie = handleCookie;
 }()
