@@ -6,7 +6,13 @@
  *      val {Any} cookie的value值
  *      path {String} cookie的作用域
  *      expire {Number} cookie的有效期
- */ 
+ */
+
+ /* 
+ issue: 
+ 1. encodeURIComponent
+ 2. domain,expires,max-age,path
+ */
 ;!function(){
     // 默认参数
     const defaultParams = {
@@ -42,7 +48,7 @@
     }
     function getCookieValue(key) {
         if(key === '' || typeof(key) !== 'string') return;
-        let reg = new RegExp('\s{0,}' + key + '=(.*?);'),
+        let reg = new RegExp('\\s' + key + '=([^;])*'),
         r = cookieStr.match(reg);
         if(r) return r[1];
         return; 
