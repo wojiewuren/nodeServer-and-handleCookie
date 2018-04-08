@@ -11,27 +11,57 @@
  /* 
  issue: 
  1. encodeURIComponent
- 2. domain,expires,max-age,path
+ 2. domain,maxAge,maxAge,path
+ 3. 兼容
+ 4. 每次都要写吗 domain,maxAge,maxAge,path
  */
 ;!function(){
     // 默认参数
     const defaultParams = {
         path: '/',
-        expire: (new Date).getTime() / 1000 + 3600 * 24 * 7,
+        domain: document.location.hostname,
+        maxAge: (new Date).getTime() / 1000 + 3600 * 24 * 7,
     },
-    cookieStr = document.cookie;
-    function HandleCookie(path,  expire) {
+    cookieObj = (function(){
+        let str = document.cookie,
+            obj = {};
+        if(!str) return;
+        let arr = str.split('; ');
+        arr.forEach(function(item) {
+            let temp = item.split('=');
+            obj[temp[0]] = decodeURIComponent(temp[1])    
+        })
+        return obj;
+    } ());
+    function HandleCookie(path,  maxAge, domain) {
         this.path = path;
-        this.expire = expire;
+        this.domain = domain;
+        this.maxAge = maxAge;
     }
-    // 设置cookie   
-    HandleCookie.prototype.set = function(opt) {
-        if(Object.prototype.toString.call(opt) === '[object Object]') {
-            if(JSON.stringify(opt) === '{}') return;
-            for(let k in opt) {
-                if(!k || !opt[k]) continue;
-                document.cookie = k + '=' + opt[k];
-            }
+    /**
+     * @use 设置cookie 
+     * @param {Array} optArr 常规情况下只设置cookie的key和对应value,path/domain/maxAge选传，有默认值
+     */                  
+    HandleCookie.prototype.set = function(optArr) {
+        let _this = this;
+        if(Object.prototype.toString.call(optArr) === '[object Array]') {
+            // if(JSON.stringify(opt) === '{}') return;
+            optArr.forEach(function(item) {
+                for(let k in item) {
+                    if(!k || !item[k]) continue;
+                    document.cookie = k + '=' + encodeURIComponent(item[k]);
+                }
+                // TODO 设置默认值(每次都要吗)
+                if(!('path' in item)) {
+                    document.cookie = 'path=' + encodeURIComponent(_this.path);
+                }
+                if(!('domain' in item)) {
+                    document.cookie = 'domain=' + encodeURIComponent(_this.domain);
+                }
+                if(!('maxAge' in item)) {
+                    document.cookie = 'max-age=' + encodeURIComponent(_this.maxAge);
+                }
+            })
         }
     }
     // 获取cookie   
@@ -39,22 +69,23 @@
         return getCookieValue(key)
     }
     // 删除一条cookie值   
-    HandleCookie.prototype.remove = function() {
-
+    HandleCookie.prototype.remove = function(key) {
+        document.cookie = key + '=;max-age=0';
     }
     // 删除所有cookie值   
     HandleCookie.prototype.clear = function() {
-
+        document.cookie = 'tname=;maxAge=0';
     }
     function getCookieValue(key) {
-        if(key === '' || typeof(key) !== 'string') return;
-        let reg = new RegExp('\\s' + key + '=([^;])*'),
+        if(key === '' || typeof(key) !== 'string') return null;
+        return cookieObj[key] || null;
+        /* let reg = new RegExp('\\s' + key + '=([^;])*'),
         r = cookieStr.match(reg);
-        if(r) return r[1];
-        return; 
+        if(r) return decodeURIComponent(r[1]);
+        return;  */
     }
     
-    const handleCookie = new HandleCookie(defaultParams.path, defaultParams.expire);
+    const handleCookie = new HandleCookie(defaultParams.path, defaultParams.domain, defaultParams.maxAge);
 
     window.handleCookie = handleCookie;
 }()
