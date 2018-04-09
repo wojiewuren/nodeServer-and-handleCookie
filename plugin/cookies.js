@@ -10,8 +10,6 @@
 
  /* 
  issue: 
- 1. encodeURIComponent
- 2. domain,maxAge,maxAge,path
  3. 兼容
  4. 每次都要写吗 domain,maxAge,maxAge,path
  */
@@ -40,50 +38,74 @@
     }
     /**
      * @use 设置cookie 
-     * @param {Array} optArr 常规情况下只设置cookie的key和对应value,path/domain/maxAge选传，有默认值
+     * @param {Array/Object} opt 常规情况下只设置cookie的key和对应value,path/domain/maxAge选传，有默认值
      */                  
-    HandleCookie.prototype.set = function(optArr) {
+    HandleCookie.prototype.set = function(opt) {
         let _this = this;
-        if(Object.prototype.toString.call(optArr) === '[object Array]') {
-            // if(JSON.stringify(opt) === '{}') return;
-            optArr.forEach(function(item) {
-                for(let k in item) {
-                    if(!k || !item[k]) continue;
-                    document.cookie = k + '=' + encodeURIComponent(item[k]);
-                }
-                // TODO 设置默认值(每次都要吗)
-                if(!('path' in item)) {
-                    document.cookie = 'path=' + encodeURIComponent(_this.path);
-                }
-                if(!('domain' in item)) {
-                    document.cookie = 'domain=' + encodeURIComponent(_this.domain);
-                }
-                if(!('maxAge' in item)) {
-                    document.cookie = 'max-age=' + encodeURIComponent(_this.maxAge);
-                }
+        // Array入参,可以同时设置多个
+        if(Object.prototype.toString.call(opt) === '[object Array]') {
+            opt.forEach(function(item) {
+                setItem(item,_this)
             })
+            return;
+        }
+        // Object入参，设置单个值
+        if(Object.prototype.toString.call(opt) === '[object Object]') {
+            setItem(opt,_this)
+            return;
         }
     }
-    // 获取cookie   
+    /**
+     * @use 获取cookie
+     * @param {String} key cookie键值
+     */
     HandleCookie.prototype.get = function(key) {
-        return getCookieValue(key)
-    }
-    // 删除一条cookie值   
-    HandleCookie.prototype.remove = function(key) {
-        document.cookie = key + '=;max-age=0';
-    }
-    // 删除所有cookie值   
-    HandleCookie.prototype.clear = function() {
-        document.cookie = 'tname=;maxAge=0';
-    }
-    function getCookieValue(key) {
         if(key === '' || typeof(key) !== 'string') return null;
         return cookieObj[key] || null;
-        /* let reg = new RegExp('\\s' + key + '=([^;])*'),
+    }
+    /**
+     * @use 删除key键值对应cookie值 
+     * @param {String} key cookie键值
+     */  
+    HandleCookie.prototype.removeItem = function(key) {
+        if(key === '' || typeof(key) !== 'string') return null;
+        document.cookie = key + '=;max-age=0';
+    }
+    /**
+     * @use 删除所有cookie值
+     */  
+    HandleCookie.prototype.clear = function() {
+        for(let k in cookieObj) {
+            document.cookie = k + '=;max-age=0';
+        }
+    }
+    /**
+     * @处理设置cookie 
+     * @param {Object} item cookie键值入参 
+     * @param {Object} _this 原型对象
+     */
+    function setItem(item,_this) {
+        for(let k in item) {
+            if(!k || !item[k]) continue;
+            document.cookie = k + '=' + encodeURIComponent(item[k]);
+        }
+        // TODO 设置默认值(每次都要吗)
+        if(!('path' in item)) {
+            document.cookie = 'path=' + encodeURIComponent(_this.path);
+        }
+        if(!('domain' in item)) {
+            document.cookie = 'domain=' + encodeURIComponent(_this.domain);
+        }
+        if(!('maxAge' in item)) {
+            document.cookie = 'max-age=' + encodeURIComponent(_this.maxAge);
+        }
+    }
+    /* function getCookieValue(key) {
+        let reg = new RegExp('\\s' + key + '=([^;])*'),
         r = cookieStr.match(reg);
         if(r) return decodeURIComponent(r[1]);
-        return;  */
-    }
+        return; 
+    } */
     
     const handleCookie = new HandleCookie(defaultParams.path, defaultParams.domain, defaultParams.maxAge);
 
